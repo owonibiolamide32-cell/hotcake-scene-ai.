@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#11101b">
+<title>Hot Cake Scene AI — Video Studio</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#11101b; --panel:#1c1a2b; --line:#343149;
+  --text:#f6f3ff; --muted:#a6a1bb; --pink:#ff4fa3;
+  --purple:#9b78ff; --green:#61e6b2;
+}
+* { box-sizing:border-box }
+body {
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:system-ui,-apple-system,sans-serif;
+  padding:20px 15px 35px; max-width:700px; margin-inline:auto;
+}
+header { margin-bottom:23px }
+.brand { color:var(--pink); font-size:12px; font-weight:800; letter-spacing:2px }
+h1 { font-size:26px; margin:5px 0 }
+.subtitle,.muted { color:var(--muted); font-size:13px; line-height:1.5 }
+.section { margin-top:22px }
+.section-title { font-size:14px; font-weight:750; margin-bottom:10px }
+.frames { display:grid; grid-template-columns:1fr 30px 1fr; align-items:center; gap:7px }
+.frame {
+  position:relative; min-width:0; min-height:145px;
+  background:var(--panel); border:1px dashed #57516f;
+  border-radius:15px; display:flex; align-items:center;
+  justify-content:center; text-align:center; overflow:hidden;
+}
+.frame input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer }
+.frame img { width:100%; height:100%; position:absolute; inset:0; object-fit:cover; display:none }
+.frame-content { padding:8px; pointer-events:none; z-index:1 }
+.frame-icon { font-size:27px }
+.frame-label { font-size:11px; font-weight:800; margin-top:7px }
+.frame-help { font-size:10px; color:var(--muted); margin-top:4px }
+.frame.has-image .frame-content { display:none }
+.frame.has-image img { display:block }
+.arrow { text-align:center; color:var(--purple); font-size:22px }
+.optional { color:var(--muted); font-size:10px; font-weight:500 }
+.card {
+  background:var(--panel); border:1px solid var(--line);
+  padding:14px; border-radius:15px;
+}
+.switch { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:13px }
+button,select { font:inherit; cursor:pointer }
+.switch button,.choice {
+  background:#242137; color:var(--text); border:1px solid var(--line);
+  padding:11px 8px; border-radius:10px; font-size:12px;
+}
+.switch button.active,.choice.active {
+  background:#3b2446; border-color:var(--pink); color:#ff9dcc;
+}
+input[type=text],textarea,select {
+  width:100%; background:#12111d; color:var(--text);
+  border:1px solid var(--line); border-radius:10px;
+  padding:12px; outline:none; font-size:13px;
+}
+textarea { min-height:105px; resize:vertical; line-height:1.5 }
+textarea:focus,input:focus,select:focus { border-color:var(--purple) }
+input[type=file] { max-width:100%; font-size:12px }
+.field-label { font-size:12px; font-weight:700; margin:13px 0 7px; display:block }
+.hint { font-size:11px; color:var(--muted); margin-top:6px }
+.hidden { display:none!important }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+.choices { display:flex; flex-wrap:wrap; gap:7px }
+.choice { min-width:55px }
+select { min-height:42px }
+.duration-head { display:flex; justify-content:space-between; align-items:center }
+.duration-value { color:var(--pink); font-weight:800; font-size:18px }
+.duration-control { display:grid; grid-template-columns:42px 1fr 42px; gap:8px; align-items:center; margin-top:10px }
+.stepper {
+  height:40px; border-radius:10px; background:#29253c;
+  color:white; border:1px solid var(--line); font-size:20px;
+}
+input[type=range] { width:100%; accent-color:var(--pink) }
+.range-labels { display:flex; justify-content:space-between; color:var(--muted); font-size:10px }
+.summary { margin-top:22px; padding:16px; border:1px solid #4b3a67; background:#211b31; border-radius:15px }
+.summary-row { display:flex; justify-content:space-between; gap:10px; padding:7px 0; font-size:13px }
+.summary-row span:first-child { color:var(--muted) }
+.summary-row strong { text-align:right }
+.generate {
+  width:100%; margin-top:15px; padding:15px; border:0;
+  border-radius:12px; color:white; font-weight:800; font-size:15px;
+  background:linear-gradient(100deg,#a34cff,#ff4fa3);
+}
+.generate:disabled { opacity:.65; cursor:not-allowed }
+.notice { margin-top:12px; color:#ffc7df; font-size:11px; line-height:1.5 }
+#status { margin-top:12px; font-size:12px; line-height:1.5 }
+footer { text-align:center; color:var(--muted); font-size:10px; margin-top:22px }
+@media(max-width:360px) {
+ body { padding:16px 10px }
+ .frame { min-height:125px }
+ .frame-label { font-size:10px }
+ .grid2 { gap:8px }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">HOT CAKE SCENE AI</div>
+  <h1>🎬 Video Studio</h1>
+  <div class="subtitle">Build your scene, choose your voice, and prepare your video.</div>
+</header>
+
+<div class="section">
+  <div class="section-title">01 · Scene frames</div>
+  <div class="frames">
+    <label class="frame" id="startFrame">
+      <div class="frame-content">
+        <div class="frame-icon">📸</div>
+        <div class="frame-label">START FRAME</div>
+        <div class="frame-help">Tap to choose image</div>
+      </div>
+      <img id="startPreview" alt="Starting frame preview">
+      <input id="startImage" type="file" accept="image/*" aria-label="Choose starting frame">
+    </label>
+    <div class="arrow">→</div>
+    <label class="frame" id="endFrame">
+      <div class="frame-content">
+        <div class="frame-icon">🖼️</div>
+        <div class="frame-label">ENDING FRAME</div>
+        <div class="frame-help">Optional · if supported</div>
+      </div>
+      <img id="endPreview" alt="Ending frame preview">
+      <input id="endImage" type="file" accept="image/*" aria-label="Choose ending frame">
+    </label>
+  </div>
+  <div class="hint">The ending frame is optional. Support depends on the video model.</div>
+</div>
+
+<div class="section">
+  <div class="section-title">02 · Speech and audio</div>
+  <div class="card">
+    <div class="switch">
+      <button type="button" class="active" id="textMode">✍️ Type speech</button>
+      <button type="button" id="audioMode">🎤 Upload audio</button>
+    </div>
+    <div id="textPanel">
+      <label class="field-label" for="speech">Words for the AI voice</label>
+      <textarea id="speech" maxlength="6000" placeholder="Type exactly what you want the character to say..."></textarea>
+      <div class="hint"><span id="speechCount">0</span>/6000 characters</div>
+      <label class="field-label" for="voice">Voice selection</label>
+      <select id="voice">
+        <option value="auto">Automatic voice</option>
+        <option value="female">Female voice</option>
+        <option value="male">Male voice</option>
+      </select>
+      <div class="hint">Available voices depend on the connected generation service.</div>
+    </div>
+    <div id="audioPanel" class="hidden">
+      <label class="field-label" for="audioFile">Choose a voice recording</label>
+      <input id="audioFile" type="file" accept="audio/*">
+      <div class="hint">Select an audio file from your device. Recording directly inside this app is not connected yet.</div>
+      <div id="audioName" class="hint">No audio selected.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">03 · Video description</div>
+  <div class="card">
+    <label class="field-label" for="description">Scene instructions</label>
+    <textarea id="description" maxlength="6000" placeholder="Describe actions, facial expressions, gestures, camera movements, zoom, and transitions..."></textarea>
+    <div class="hint"><span id="descriptionCount">0</span>/6000 characters · Separate from spoken dialogue.</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">04 · Video settings</div>
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <label class="field-label" for="quality">Quality</label>
+        <select id="quality">
+          <option>480p</option>
+          <option selected>720p</option>
+          <option>1080p</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="ratio">Aspect ratio</label>
+        <select id="ratio">
+          <option value="9:16">9:16 · Portrait</option>
+          <option value="16:9">16:9 · Landscape</option>
+          <option value="1:1">1:1 · Square</option>
+        </select>
+      </div>
+    </div>
+    <div class="section">
+      <div class="duration-head">
+        <label class="field-label" for="duration">Duration</label>
+        <div class="duration-value"><span id="durationValue">15</span> sec</div>
+      </div>
+      <div class="duration-control">
+        <button type="button" class="stepper" id="durationDown" aria-label="Decrease duration">−</button>
+        <input id="duration" type="range" min="5" max="60" step="5" value="15">
+        <button type="button" class="stepper" id="durationUp" aria-label="Increase duration">+</button>
+      </div>
+      <div class="range-labels"><span>5 sec</span><span>60 sec</span></div>
+      <div class="hint">The actual model may support a shorter maximum duration.</div>
+    </div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="section-title">Your video request</div>
+  <div class="summary-row"><span>Selected audio</span><strong id="audioSummary">AI speech</strong></div>
+  <button type="button" class="generate" id="generate">✦ Generate Video</button>
+  <div class="notice">Generation is not connected yet. This preview will not upload your files, start a job, or deduct diamonds.</div>
+  <div id="status" role="status" aria-live="polite"></div>
+</div>
+
+<footer>HOT CAKE SCENE AI · VIDEO STUDIO</footer>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    try { tg.setHeaderColor('#11101b'); tg.setBackgroundColor('#11101b'); } catch (_) {}
+  }
+
+  let mode = 'text';
+  const objectUrls = {};
+
+  function preview(inputId, frameId, previewId, key) {
+    $(inputId).addEventListener('change', () => {
+      const file = $(inputId).files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        $('status').textContent = 'Please choose an image file.';
+        return;
+      }
+      if (objectUrls[key]) URL.revokeObjectURL(objectUrls[key]);
+      objectUrls[key] = URL.createObjectURL(file);
+      $(previewId).src = objectUrls[key];
+      $(frameId).classList.add('has-image');
+      $('status').textContent = '';
+    });
+  }
+  preview('startImage', 'startFrame', 'startPreview', 'start');
+  preview('endImage', 'endFrame', 'endPreview', 'end');
+
+  function setMode(next) {
+    mode = next;
+    $('textMode').classList.toggle('active', mode === 'text');
+    $('audioMode').classList.toggle('active', mode === 'audio');
+    $('textPanel').classList.toggle('hidden', mode !== 'text');
+    $('audioPanel').classList.toggle('hidden', mode !== 'audio');
+    $('audioSummary').textContent = mode === 'text' ? 'AI speech' : 'Uploaded audio';
+    $('status').textContent = '';
+  }
+  $('textMode').addEventListener('click', () => setMode('text'));
+  $('audioMode').addEventListener('click', () => setMode('audio'));
+
+  function count(input, output) {
+    $(output).textContent = $(input).value.length;
+  }
+  $('speech').addEventListener('input', () => count('speech', 'speechCount'));
+  $('description').addEventListener('input', () => count('description', 'descriptionCount'));
+
+  $('audioFile').addEventListener('change', () => {
+    const file = $('audioFile').files[0];
+    $('audioName').textContent = file ? 'Selected: ' + file.name : 'No audio selected.';
+  });
+
+  function updateDuration(value) {
+    const n = Math.max(5, Math.min(60, Number(value)));
+    $('duration').value = n;
+    $('durationValue').textContent = n;
+  }
+  $('duration').addEventListener('input', e => updateDuration(e.target.value));
+  $('durationDown').addEventListener('click', () => updateDuration(Number($('duration').value) - 5));
+  $('durationUp').addEventListener('click', () => updateDuration(Number($('duration').value) + 5));
+
+  $('generate').addEventListener('click', () => {
+    if (!$('startImage').files.length) {
+      $('status').textContent = 'Please select a starting frame first.';
+      $('startFrame').scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    if (mode === 'text' && !$('speech').value.trim()) {
+      $('status').textContent = 'Please type the words for the AI voice.';
+      $('speech').focus();
+      return;
+    }
+    if (mode === 'audio' && !$('audioFile').files.length) {
+      $('status').textContent = 'Please choose an audio recording.';
+      $('audioFile').focus();
+      return;
+    }
+    $('status').textContent =
+      'Your interface is working, but generation is not connected yet. No files were uploaded and no diamonds were deducted.';
+  });
+})();
+</script>
+</body>
+</html>
